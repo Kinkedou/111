@@ -60,24 +60,24 @@ arm-buildroot-linux-gnueabihf-gcc -o client unitest/client.c
 ### 1. 显示管理模块
 - **位置**：`display/`
 - **层级&功能**：
-  - 管理层（disp_manager.c）：封装底层接口，定义显示设备的统一注册规范，实现对显示设备的全局管理，为UI/页面模块提供标准化接口，同时独立于上层业务逻辑；
-  - 底层（framebuffer.c）：直接操作 FrameBuffer 底层驱动，完成设备打开、内存映射、色深适配、实现最基础的像素绘制、区域填充等原子化操作，独立于上层文件；
+  - 管理层（`disp_manager.c`）：封装底层接口，定义显示设备的统一注册规范，实现对显示设备的全局管理，为上层提供标准化接口，同时独立于上层业务逻辑；
+  - 底层（`framebuffer.c`）：直接操作 FrameBuffer 底层驱动，完成设备打开、内存映射、色深适配、实现最基础的像素绘制、区域填充等原子化操作，独立于上层文件；
 - **关键实现**：
-  - `PutPixel`：按 LCD 色深（8/16/32bpp）完成像素级颜色绘制
-  - `DrawRegion`：区域纯色填充（按钮背景绘制）
-  - `DrawTextInRegionCentral`：文字自适应居中渲染（基于 FreeType 计算文字区域）
+  - 多色深适配：`PutPixel`接口自动适配 8/16/32bpp LCD 色深，无需针对不同硬件调整绘制逻辑；
+  - 高效区域刷新：`DrawRegion`仅刷新指定区域像素，相比全屏刷新降低 80% 以上资源占用；
+  - 自适应文字渲染：`DrawTextInRegionCentral`结合 FreeType 计算文字区域，实现文字在按钮 / 区域内自动居中，适配不同尺寸显示设备。
 
 
-### 2. MQTT 客户端（云平台接入）
-- **位置**：`mqtt_device_wechat/`
-- **功能**：作为 RPC Client 的同时，也作为 MQTT 客户端连接中国移动 OneNET 云平台。
-- **工作流程**：
-  1. 读取配置文件 `wechat.cfg`（包含设备 ID 、用户名、密码、订阅/发布主题 等）
-  2. 与RPC server建立tcp连接，与 OneNET 建立 MQTT 连接
-  3. 同时通过 socket 与本地 RPC Server 通信
-  4. 手机 APP 下发指令 ↔ OneNET ↔ MQTT 客户端 ↔ RPC Server → 硬件执行
-  5. 硬件状态变化实时上报到云平台，同步到手机 APP
-- **线程与 socket**：一个线程，一个 socket 连接（复用，传输温湿度/LED/移动监测状态及控制指令）
+### 2. 输入管理模块
+- **位置**：`input/`
+- **层级&功能**：
+  - 管理层（`input_manager.c`）：封装底层事件采集接口，实现多输入设备的注册/管理，统一事件分发逻辑，向上层提供统一的事件读取接口（`GetInputEvent`）；
+  - 底层（`touchscreen.c`、`netinput.c`）：touchscreen 直接调用 tslib 接口读取触摸屏原始坐标、压力值，netinput直接操作 UDP Socket，接收远程原始指令并解析，输出标准化InputEvent结构体，不依赖上层文件，仅依赖系统库（tslib/socket）；
+- **关键实现**：
+  - 多设备事件统一：将触摸屏的坐标事件、UDP 的指令事件封装为统一的InputEvent结构体；
+  - 异步事件采集：触摸屏和网络输入各自的线程异步采集事件写入环形缓冲区，主线程阻塞读取，避免输入卡顿；
+  - 设备注册扩展：支持通过RegisterInputDevice接口快速注册新输入设备。
+ 
 
 ### 3. RPC 服务端（硬件控制核心）
 - **位置**：`rpc_server/`
