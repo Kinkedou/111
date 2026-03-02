@@ -71,8 +71,8 @@ arm-buildroot-linux-gnueabihf-gcc -o client unitest/client.c
 ### 2. 输入管理模块
 - **位置**：`input/`
 - **层级&功能**：
-  - 管理层（`input_manager.c`）：封装底层事件采集接口，实现多输入设备的注册/管理，统一事件分发逻辑，向上层提供统一的事件读取接口（`GetInputEvent`）；
-  - 底层（`touchscreen.c`、`netinput.c`）：touchscreen 直接调用 tslib 接口读取触摸屏原始坐标、压力值，netinput直接操作 UDP Socket，接收远程原始指令并解析，输出标准化InputEvent结构体，不依赖上层文件，仅依赖系统库（tslib/socket）；
+  - 管理层（`input_manager.c`）：向上层提供统一的事件读取接口`GetInputEvent`，实现多输入设备的注册/管理，统一事件分发逻辑，封装底层事件采集接口，；
+  - 底层（`touchscreen.c`、`netinput.c`）：touchscreen 调用 tslib 接口读取触摸屏原始坐标和压力值，netinput操作 UDP Socket接收并解析远程指令，最终输出标准化InputEvent结构体，不依赖上层文件，仅依赖系统库（tslib/socket）；
 - **关键实现**：
   - 并发事件处理：环形队列缓冲区支持多输入设备并发写入，无事件丢失，响应延迟 < 10ms；
   - 跨输入类型兼容：上层仅通过GetInputEvent接口获取事件，无需区分是触摸还是网络输入，完全解耦输入类型；
