@@ -32,6 +32,7 @@
 | gui.conf | 按钮配置文件 | 对应 config.c 中 CFG_FILE 宏定义 |
 | led.sh | 按钮触发示例脚本 | - |
 | simsun.ttc | 字体文件 | 对应 freetype.c 字体加载逻辑 |
+| makefile.build | 通用递归构建脚本 | - |
 
 ---
 
