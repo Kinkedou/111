@@ -2,7 +2,7 @@
 ## 🚀 项目概述
 
 > **基于 i.MX6ULL 的嵌入式 Linux 轻量化GUI交互框架，**  
-> 支持**触摸屏本地操作 + UDP 网络远程指令**双输入方式，基于 FrameBuffer 驱动 LCD 显示，结合 FreeType 实现自定义按钮式交互界面，可灵活配置按钮触发指令，适用于嵌入式设备可视化控制场景
+> 支持**触摸屏本地操作 + UDP 网络远程指令**双输入方式，基于 FrameBuffer 驱动 LCD 显示，结合 FreeType 实现自定义按钮式交互界面，可灵活配置按钮触发指令，适用于嵌入式设备可视化控制场景（如工业控制面板、智能家居中控、嵌入式测试终端等）
 
 **核心功能**：
 - 本地触摸屏交互（基于 tslib），支持触摸坐标 / 压力值识别
@@ -17,21 +17,21 @@
 ---
 
 ## 📦 仓库结构
-| 目录/文件 | 说明 |
-|----------|------|
-| business/ | 业务主逻辑模块 |
-| config/ | 配置解析模块 |
-| display/ | 显示设备模块 |
-| font/ | 字体渲染模块 |
-| include/ | 所有模块头文件 |
-| input/ | 输入模块 |
-| page/ | 页面管理模块 |
-| ui/ | 按钮组件模块 |
-| unitest/ | 网络指令测试模块 |
-| Makefile | 项目说明文档 |
-| gui.conf | 按钮配置文件（按钮名称，可触摸属性，触发命令） |
-| led.sh | 按钮触发示例脚本 |
-| simsun.ttc | 字体文件 |
+| 目录/文件 | 说明 | 对应源码文件 |
+|----------|------|--------------|
+| business/ | 业务主逻辑模块 | main.c |
+| config/ | 配置解析模块 | config.c |
+| display/ | 显示设备模块 | disp_manager.c、framebuffer.c |
+| font/ | 字体渲染模块 | font_manager.c、freetype.c |
+| include/ | 各模块头文件 | 所有 .h 文件 |
+| input/ | 输入模块 | input_manager.c、touchscreen.c、netinput.c |
+| page/ | 页面管理模块 | page_manager.c、main_page.c |
+| ui/ | 按钮组件模块 | button.c |
+| unitest/ | 网络指令测试模块 | client.c |
+| Makefile | 项目构建文件 | - |
+| gui.conf | 按钮配置文件 | 对应 config.c 中 CFG_FILE 宏定义 |
+| led.sh | 按钮触发示例脚本 | - |
+| simsun.ttc | 字体文件 | 对应 freetype.c 字体加载逻辑 |
 
 ---
 
