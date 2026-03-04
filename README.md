@@ -6,7 +6,7 @@
 
 **核心功能**：
 - 本地触摸屏交互（基于 tslib），支持触摸坐标 / 压力值识别
-- UDP 网络远程指令控制，端口可配置，支持按钮状态远程控制
+- UDP 网络远程指令控制，端口可配置（默认8888），支持按钮状态远程控制
 - FrameBuffer 底层驱动，像素级 LCD 画面绘制与区域刷新
 - FreeType 字体渲染，支持文字自适应居中、动态字体大小调整
 - 配置文件驱动按钮生成，支持按钮可触摸属性、触发系统指令自定义
@@ -46,7 +46,7 @@ arm-buildroot-linux-gnueabihf-gcc -o client unitest/client.c
 ### 运行
 ```bash
 ./LiteUI ./simsun.ttc &          # 后台启动
-./client 127.0.0.1 "led ok"      # 指令格式“按钮名 ok/error/数字”，对应打开/关闭/特殊三种状态
+./client 127.0.0.1 "led ok"      # 指令格式为“按钮名 ok/error/数字”，对应打开/关闭/特殊三种状态
 ``` 
 ---
 
@@ -67,14 +67,14 @@ arm-buildroot-linux-gnueabihf-gcc -o client unitest/client.c
   - 高效区域刷新：`DrawRegion`仅刷新指定区域像素，相比全屏刷新降低 80% 以上资源占用；
   - 自适应文字渲染：`DrawTextInRegionCentral`结合 FreeType 计算文字区域，实现文字在按钮 / 区域内自动居中，适配不同尺寸显示设备。
 
-
 ### 2. 输入管理模块
 - **位置**：`input/`
 - **层级&功能**：
+
   - 管理层（`input_manager.c`）：向上层提供统一的事件读取接口`GetInputEvent`，实现多输入设备的注册/管理，统一事件分发逻辑，封装底层事件采集接口；
   - 底层（`touchscreen.c`、`netinput.c`）：touchscreen 调用 tslib 接口读取触摸屏原始坐标和压力值，netinput 操作 UDP Socket 接收并解析远程指令，最终输出标准化InputEvent结构体，不依赖上层文件，仅依赖系统库（tslib/socket）；
 - **关键实现**：
-  - 并发事件处理：环形队列缓冲区支持多输入设备并发写入，无事件丢失，响应延迟 < 10ms；
+  - 并发事件处理：每个输入设备对应独立线程采集事件，环形队列缓冲区（BUFFER_LEN=20）支持多输入设备并发写入，无事件丢失，响应延迟 < 10ms；
   - 跨输入类型兼容：上层仅通过GetInputEvent接口获取事件，无需区分是触摸还是网络输入，完全解耦输入类型；
   - 即插即用扩展：新增输入设备仅需实现标准采集接口，无需修改现有事件分发逻辑。
  
@@ -97,6 +97,7 @@ arm-buildroot-linux-gnueabihf-gcc -o client unitest/client.c
   - `button.c`：封装按钮的初始化、绘制、状态切换逻辑；
 - **关键实现**：
   - 低资源绘制：按钮刷新仅重绘按钮区域，而非全屏，降低 CPU / 内存占用；
+  - 状态配色：默认（红色 0xff0000）、按下（绿色 0x00ff00）、百分比（蓝色 0x0000ff），可通过 ui.h 宏定义修改；
 #### 4.2 页面模块
 - **位置**：`page/`
 - **层级&功能**：
@@ -124,8 +125,8 @@ arm-buildroot-linux-gnueabihf-gcc -o client unitest/client.c
 
 
 ### 6. 整体数据流
- - 本地用户（触摸屏） --> input 模块 --> page 模块（事件分发） --> ui 模块（按钮状态切换 + 指令执行） -->  font 模块（渲染字体） -->  display 模块（画面刷新）
- - 远程用户（UDP 客户端） --> input 模块 --> page 模块（事件分发） --> ui 模块（按钮状态切换 + 指令执行） -->  font 模块（渲染字体） --> display 模块（画面刷新）
+ - 本地用户（触摸屏） --> input 模块（触摸事件采集） --> page 模块（事件分发） --> ui 模块（按钮状态切换 + 指令执行） -->  font 模块（渲染字体） -->  display 模块（画面刷新）
+ - 远程用户（UDP 客户端） --> input 模块（网络事件解析） --> page 模块（事件分发） --> ui 模块（按钮状态切换 + 指令执行） -->  font 模块（渲染字体） --> display 模块（画面刷新）
 
 ---
 
@@ -138,9 +139,10 @@ arm-buildroot-linux-gnueabihf-gcc -o client unitest/client.c
 - **pthread**：多线程支持
 ### 运行前准备
 ```bash
-cp gui.conf /etc/test_gui/  #将配置文件放到开发板xxx目录
+mkdir -p /etc/test_gui      #新建目录
+cp gui.conf /etc/test_gui/  #将配置文件放到开发板该目录下
 dos2unix led.sh             #转换为Linux/Unix格式的sh文件
-cp led.sh /bin/             #将文件放到开发板xxx目录
+cp led.sh /bin/             #将文件放到开发板目录
 chmod +x led.sh             #添加可执行权限
 ```
 编译和运行详情见快速开始部分
