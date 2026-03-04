@@ -131,7 +131,19 @@ arm-buildroot-linux-gnueabihf-gcc -o client unitest/client.c
 
 ## 🔧 编译与运行
 
-
+### 依赖库
+项目依赖以下第三方库（需提前移植到嵌入式平台）：
+- **tslib**：触摸屏校准与输入读取
+- **FreeType2**：字体渲染
+- **pthread**：多线程支持
+### 运行前准备
+```bash
+cp gui.conf /etc/test_gui/  #将配置文件放到开发板xxx目录
+dos2unix led.sh             #转换为Linux/Unix格式的sh文件
+cp led.sh /bin/             #将文件放到开发板xxx目录
+chmod +x led.sh             #添加可执行权限
+```
+编译和运行详情见快速开始部分
 
 ---
 
